@@ -1,186 +1,225 @@
 from PIL import ImageDraw, Image, ImageFont
 from math import sqrt, atan
-import shapely.geometry as sh
+from shapely.geometry import Polygon, LinearRing
 
-font = ImageFont.truetype("arial.ttf", 20)
+font = ImageFont.truetype("arial.ttf", 20)  # Font using to display sizes
 
+"""
+Given coordinates to build a polygon & Given sizes of a plank (here for example)
+"""
 x = [100, 100, 1100, 1300, 1350, 1350, 1100, 1100, 900, 900]
 y = [550, 950, 950, 1000, 900, 750, 750, 150, 150, 550]
+plank_length = 33
+plank_width = 13
 
-xy1 = []
-xy2 = []
+"""
+List with sets of coordinates to build a polygon
+"""
+polygon_coord = [(x[k], y[k]) for k in range(len(x))]
 
-max_x = max(x)
-min_x = min(x)
-max_y = max(y)
-min_y = min(y)
-dict_point = {}
+"""
+Max & min coordinates
+"""
+max_x_coord = max(x)
+min_x_coord = min(x)
+max_y_coord = max(y)
+min_y_coord = min(y)
 
-for k in range(len(x)):
-    xy = (x[k], y[k])
-    xy1.append(xy)
-    dict_point[k + 1] = [x[k], y[k]]
+"""
+Creating a blank image
+"""
+img1 = Image.new("RGB", (int((max_x_coord - min_x_coord) * 1.8), int((max_y_coord - min_y_coord) * 1.8)), color="white")
+ImageDraw.Draw(img1).polygon(polygon_coord, fill="white", outline="blue")
 
-dx = 33
-dy = 13
+"""
+Creating circuit using polygon
+"""
+circuit = Polygon(LinearRing(polygon_coord))
 
-img1 = Image.new("RGB", (int((max_x - min_x) * 1.8), int((max_y - min_y) * 1.8)), color="white")
-ImageDraw.Draw(img1).polygon(xy1, fill="white", outline="blue")  # рисуем комнату
+"""
+Temporary variables
+"""
+x_coord_check = min_x_coord
+count_x = 0
 
-room = sh.Polygon(sh.LinearRing(xy1))
-
-check_x = min_x
-index_x = 0
-
-while check_x < max_x:
-    check_y = min_y
-    index_y = 0
-    while check_y < max_y:
+"""
+Building up plank by plank from minimal values to maximum
+"""
+while x_coord_check < max_x_coord:
+    y_coord_check = min_y_coord
+    count_y = 0
+    while y_coord_check < max_y_coord:
         coord = [
-            (min_x + index_x * dx, min_y + index_y * dy),
-            (min_x + index_x * dx, min_y + (index_y + 1) * dy),
-            (min_x + (index_x + 1) * dx, min_y + (index_y + 1) * dy),
-            (min_x + (index_x + 1) * dx, min_y + index_y * dy),
+            (min_x_coord + count_x * plank_length, min_y_coord + count_y * plank_width),
+            (min_x_coord + count_x * plank_length, min_y_coord + (count_y + 1) * plank_width),
+            (min_x_coord + (count_x + 1) * plank_length, min_y_coord + (count_y + 1) * plank_width),
+            (min_x_coord + (count_x + 1) * plank_length, min_y_coord + count_y * plank_width),
         ]
-        b = sh.Polygon(sh.LinearRing(coord))
-        if b.intersects(room) and not b.touches(room):
+        b = Polygon(LinearRing(coord))
+        """
+        Checking if plank in circuit -> draw
+        """
+        if b.intersects(circuit) and not b.touches(circuit):
             ImageDraw.Draw(img1).polygon(coord, fill=None, outline="black")
-        check_y += dy
-        index_y += 1
-    check_x += dx
-    index_x += 1
+        y_coord_check += plank_width
+        count_y += 1
+    x_coord_check += plank_length
+    count_x += 1
 
+"""
+Temporary variables
+"""
+angle_index = 0
 i = 0
-z = 0
+
+"""
+Dictionary with all angles (to display text right)
+"""
 dict_angle = {}
 
-while i < (len(x)):
-    deltax1 = x[z] - x[z - 1]
-    deltay1 = y[z] - y[z - 1]
-    print(f'дельты х больше нуля? {deltax1 >= 0}, {deltax1}')
-    print(f'дельты y больше нуля? {deltay1 >= 0}, {deltay1}')
-    if deltax1 == 0:
-        rumb = 90
+"""
+Filling in dictionary
+"""
+while angle_index < (len(x)):
+    delta_x = x[i] - x[i - 1]
+    delta_y = y[i] - y[i - 1]
+    if delta_x == 0:
+        value = 90
     else:
-        rumb = atan(abs(deltay1 / deltax1))
+        value = atan(abs(delta_y / delta_x))
 
-    if deltax1 >= 0 and deltay1 >= 0:
-        angle = rumb
-
-    if deltax1 < 0 and deltay1 >= 0:
-        angle = 180 - rumb
-
-    if deltax1 < 0 and deltay1 < 0:
-        angle = rumb - 180
-
-    if deltax1 >= 0 and deltay1 < 0:
-        angle = 360 - rumb
-    print(f'angle линии {i + 1}-{z + 2} = {angle}')
-    dict_angle[i + 1] = angle
-    z += 1
-    if z == (len(x)):
-        z = 0
+    if delta_x >= 0 and delta_y >= 0:
+        angle = value
+    if delta_x < 0 and delta_y >= 0:
+        angle = 180 - value
+    if delta_x < 0 and delta_y < 0:
+        angle = value - 180
+    if delta_x >= 0 and delta_y < 0:
+        angle = 360 - value
+    dict_angle[angle_index + 1] = angle
     i += 1
-    print('----------')
+    if i == (len(x)):
+        i = 0
+    angle_index += 1
 
+
+"""
+Image to display text on
+"""
 img3 = ImageDraw.Draw(img1)
 
-i = 0
-print(dict_angle)
-while i < (len(x)):
-    length = sqrt((x[i] - x[i - 1]) ** 2 + ((y[i] - y[i - 1]) ** 2))
-    print(dict_angle[i + 1])
 
-    if dict_angle[i + 1] == 90:
+"""
+Display text with length on each line
+"""
+angle_index = 0
+while angle_index < (len(x)):
+    length = sqrt((x[angle_index] - x[angle_index - 1]) ** 2 + ((y[angle_index] - y[angle_index - 1]) ** 2))
+    if dict_angle[angle_index + 1] == 90:
         img3.text(
-            (((x[i - 1] + x[i]) / 2) - 60, (y[i - 1] + y[i]) / 2),
+            (((x[angle_index - 1] + x[angle_index]) / 2) - 60, (y[angle_index - 1] + y[angle_index]) / 2),
             f'{round(length, 3)}', font=font, fill='black', align="left"
         )
-        print(f'сработало на точке {i + 1}')
-    elif dict_angle[i + 1] == 180:
+    elif dict_angle[angle_index + 1] == 180:
         img3.text(
-            (((x[i - 1] + x[i]) / 2), ((y[i - 1] + y[i]) / 2) - 25),
+            (((x[angle_index - 1] + x[angle_index]) / 2), ((y[angle_index - 1] + y[angle_index]) / 2) - 25),
             f'{round(length, 3)}', font=font, fill='black', align="left"
         )
-        print(f'сработало на точке {i + 1}')
     else:
         img3.text(
-            ((x[i - 1] + x[i]) / 2, (y[i - 1] + y[i]) / 2),
+            ((x[angle_index - 1] + x[angle_index]) / 2, (y[angle_index - 1] + y[angle_index]) / 2),
             f'{round(length, 3)}', font=font, fill='black', align="left"
         )
-    print('------')
+    angle_index += 1
+
+"""
+Temporary variables
+"""
+angle_index = 0
+i = 1
+sum = 0
+diff = 0
+
+"""
+Count all planks needed
+"""
+while angle_index < (len(x)):
+    iter_sum = x[angle_index] * y[i]
+    iter_diff = x[i] * y[angle_index]
+    sum += iter_sum
+    diff += iter_diff
     i += 1
+    if i == (len(x)):
+        i = 0
+    angle_index += 1
+planks_amount = plank_length * plank_width
 
-i = 0
-z = 1
-summa = 0
-raznost = 0
-while i < (len(x)):
-    iteracia_sum = x[i] * y[z]
-    iteracia_raz = x[z] * y[i]
-    summa += iteracia_sum
-    raznost += iteracia_raz
-    z += 1
-    if z == (len(x)):
-        z = 0
-    i += 1
-doskaS = dx * dy
+"""
+Count area of planks needed
+"""
+area = 0.5 * abs((sum - diff))
 
-S = 0.5 * abs((summa - raznost))
 
+"""
+Result text display
+"""
 img3.text(
-    (int((max_x - min_x) * 0.3), int((max_y - min_y) * 1.5)),
-    f'общая площадь: {round((S / 10000), 2)} м2, на неё нужно {int((S / doskaS) * 1.03)}\
+    (int((max_x_coord - min_x_coord) * 0.3), int((max_y_coord - min_y_coord) * 1.5)),
+    f'общая площадь: {round((area / 10000), 2)} м2, на неё нужно {int((area / planks_amount) * 1.03)}\
     досок заданного размера(с запасом 3%)',
     font=font,
     fill='black',
     align="left"
 )
 
-img3.line([(max_x, int(max_y * 1.05)), (min_x, int(max_y * 1.05))], fill='green', width=2)  # рисуем линию нижнюю
-img3.line([(int(max_x * 1.1), max_y), (int(max_x * 1.1), min_y)], fill='green', width=2)  # рисуем правую линию
 
-ImageDraw.Draw(img1).polygon(xy1, fill=None, outline="blue")
-obj = img1.load()  # вроде как какой-то обьект для получения пикселей
-room_rgb = obj[xy1[0][0], xy1[0][1]]  # rgb контура комнаты
+"""
+Draw outer lines (parallel to polygon) for size display
+"""
+img3.line([(max_x_coord, int(max_y_coord * 1.05)), (min_x_coord, int(max_y_coord * 1.05))], fill='green', width=2)
+img3.line([(int(max_x_coord * 1.1), max_y_coord), (int(max_x_coord * 1.1), min_y_coord)], fill='green', width=2)
 
-count = 0  # счетчик
+"""
+Getting object with stored pixels of image
+"""
+obj = img1.load()
+room_rgb = obj[polygon_coord[0][0], polygon_coord[0][1]]
 
-# двигаемся в какую нить сторону, сравниваем цвет пикселя с цветом контура
-while obj[(max_x, int(max_y * 1.05) - count)] != room_rgb:
-    count += 1 # считаем кол-во пикселей
-img3.line([(max_x, int(max_y * 1.05) - count), (max_x, int(max_y * 1.05))], fill='green', width=2)  # рисуем линию
-
-# дальше точно также
+"""
+Connecting outer lines with polygon to display sizes
+"""
 count = 0
-while obj[(min_x, int(max_y * 1.05) - count)] != room_rgb:
-    count += 1
-img3.line([(min_x, int(max_y * 1.05) - count), (min_x, int(max_y * 1.05))], fill='green', width=2)
-
+while obj[(max_x_coord, int(max_y_coord * 1.05) - count)] != room_rgb:
+    count += 1  # Count pixels
+img3.line([(max_x_coord, int(max_y_coord * 1.05) - count), (max_x_coord, int(max_y_coord * 1.05))], fill='green', width=2)  # рисуем линию
 count = 0
-while obj[(int(max_x * 1.1) - count, max_y)] != room_rgb:
+while obj[(min_x_coord, int(max_y_coord * 1.05) - count)] != room_rgb:
     count += 1
-img3.line([(int(max_x * 1.1) - count, max_y), (int(max_x * 1.1), max_y)], fill='green', width=2)
-
+img3.line([(min_x_coord, int(max_y_coord * 1.05) - count), (min_x_coord, int(max_y_coord * 1.05))], fill='green', width=2)
 count = 0
-while obj[(int(max_x * 1.1) - count, min_y)] != room_rgb:
+while obj[(int(max_x_coord * 1.1) - count, max_y_coord)] != room_rgb:
     count += 1
-img3.line([(int(max_x * 1.1) - count, min_y), (int(max_x * 1.1), min_y)], fill='green', width=2)
-
+img3.line([(int(max_x_coord * 1.1) - count, max_y_coord), (int(max_x_coord * 1.1), max_y_coord)], fill='green', width=2)
+count = 0
+while obj[(int(max_x_coord * 1.1) - count, min_y_coord)] != room_rgb:
+    count += 1
+img3.line([(int(max_x_coord * 1.1) - count, min_y_coord), (int(max_x_coord * 1.1), min_y_coord)], fill='green', width=2)
 img3.text(
-    (int((max_x + min_x) / 2), int(max_y * 1.06)),
-    f'{max_x - min_x}',
+    (int((max_x_coord + min_x_coord) / 2), int(max_y_coord * 1.06)),
+    f'{max_x_coord - min_x_coord}',
+    font=font,
+    fill='black',
+    align="left",
+)
+img3.text(
+    (int(max_x_coord * 1.11), int((max_y_coord + min_y_coord) / 2)),
+    f'{max_y_coord - min_y_coord}',
     font=font,
     fill='black',
     align="left",
 )
 
-img3.text(
-    (int(max_x * 1.11), int((max_y + min_y) / 2)),
-    f'{max_y - min_y}',
-    font=font,
-    fill='black',
-    align="left",
-)
-
+"""
+Saving image
+"""
 img1.save("with.png")
