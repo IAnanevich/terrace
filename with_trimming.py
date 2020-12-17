@@ -152,7 +152,7 @@ while angle_index < (len(x)):
     if i == (len(x)):
         i = 0
     angle_index += 1
-planks_amount = plank_length * plank_width
+plank_area = plank_length * plank_width
 
 """
 Count area of planks needed
@@ -165,7 +165,7 @@ Result text display
 """
 img3.text(
     (int((max_x_coord - min_x_coord) * 0.3), int((max_y_coord - min_y_coord) * 1.5)),
-    f'общая площадь: {round((area / 10000), 2)} м2, на неё нужно {int((area / planks_amount) * 1.03)}\
+    f'общая площадь: {round((area / 10000), 2)} м2, на неё нужно {int((area / plank_area) * 1.03)}\
     досок заданного размера(с запасом 3%)',
     font=font,
     fill='black',
@@ -191,19 +191,23 @@ Connecting outer lines with polygon to display sizes
 count = 0
 while obj[(max_x_coord, int(max_y_coord * 1.05) - count)] != room_rgb:
     count += 1  # Count pixels
-img3.line([(max_x_coord, int(max_y_coord * 1.05) - count), (max_x_coord, int(max_y_coord * 1.05))], fill='green', width=2)  # рисуем линию
+img3.line([(max_x_coord, int(max_y_coord * 1.05) - count), (max_x_coord, int(max_y_coord * 1.05))],
+          fill='green', width=2)
 count = 0
 while obj[(min_x_coord, int(max_y_coord * 1.05) - count)] != room_rgb:
     count += 1
-img3.line([(min_x_coord, int(max_y_coord * 1.05) - count), (min_x_coord, int(max_y_coord * 1.05))], fill='green', width=2)
+img3.line([(min_x_coord, int(max_y_coord * 1.05) - count), (min_x_coord, int(max_y_coord * 1.05))],
+          fill='green', width=2)
 count = 0
 while obj[(int(max_x_coord * 1.1) - count, max_y_coord)] != room_rgb:
     count += 1
-img3.line([(int(max_x_coord * 1.1) - count, max_y_coord), (int(max_x_coord * 1.1), max_y_coord)], fill='green', width=2)
+img3.line([(int(max_x_coord * 1.1) - count, max_y_coord), (int(max_x_coord * 1.1), max_y_coord)],
+          fill='green', width=2)
 count = 0
 while obj[(int(max_x_coord * 1.1) - count, min_y_coord)] != room_rgb:
     count += 1
-img3.line([(int(max_x_coord * 1.1) - count, min_y_coord), (int(max_x_coord * 1.1), min_y_coord)], fill='green', width=2)
+img3.line([(int(max_x_coord * 1.1) - count, min_y_coord), (int(max_x_coord * 1.1), min_y_coord)],
+          fill='green', width=2)
 img3.text(
     (int((max_x_coord + min_x_coord) / 2), int(max_y_coord * 1.06)),
     f'{max_x_coord - min_x_coord}',
